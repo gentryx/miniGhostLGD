@@ -1,0 +1,108 @@
+ 
+ =================================================
+           Mantevo miniapp MiniGhost experiment
+ =================================================
+ 
+ Communication strategy: full message aggregation (COMM_METHOD_BSPMA)
+ 
+ Computation: 27-point difference stencil on a 3D grid (STENCIL_3D27PT)
+ 
+      Global Grid Dimension:      672,      672,      672
+      Local Grid Dimension :      168,      168,      112
+ 
+ Number of variables: 40
+ Number of variables reduced each time step: 40; requested  100%.
+ 
+      Time steps:     20
+ 
+ MPI version, strong scaling
+ 
+      Task grid:     4,    4,    6
+ 
+  96 processes executing on machine Insert machine name here      
+
+ Program execution at 215729.218 on 20130222.
+ 
+ Total time for test (sec): 8.897E+01; clock resolution is 1.000E-06 per second.
+ 
+ -------------------------------------------------
+           Computational performance:
+ -------------------------------------------------
+ 
+       Time : avg, min, max secs:7.087E+01, 4.010E-01, 7.015E+01, 7.173E+01
+ 
+       Total GFLOPS:             1.474E+03
+       GFLOPS per process:       1.535E+01
+ 
+       Total floating point op   1.311E+14
+ 
+          Sums:                  1.262E+14
+          Mult:                  4.855E+12
+ 
+        Number of spikes set:            1
+ 
+ -------------------------------------------------
+      Inter-process communication statistics:
+ -------------------------------------------------
+ 
+       Avg (total,pack,send,wait,recv,unpack secs):    6.048E+00, 1.238E+00, 1.234E-03, 2.775E+00, 1.273E-02, 2.021E+00
+       StdDev (total,pack,send,wait,recv,unpack secs): 1.266E+00, 1.679E-01, 2.558E-04, 1.131E+00, 2.067E-02, 4.943E-01
+       Max (total,pack,send,wait,recv,unpack secs):    7.483E+00, 1.528E+00, 1.676E-03, 4.563E+00, 1.148E-01, 2.827E+00
+       Min (total,pack,send,wait,recv,unpack secs):    3.363E+00, 8.635E-01, 6.368E-04, 5.649E-01, 4.473E-04, 1.299E+00
+ 
+  Messages SENT per time step:
+ 
+   Number:                       8.960E+03
+ 
+        Total counts/bytes per time step:      8.164E+09   6.531E+10
+        Min, max counts/bytes per time step:   7.752E+05,    6.202E+06;    1.156E+06,    9.248E+06
+        Min, max number/counts/bytes per time step per process:      60,    5.413E+07,    4.330E+08;      120,    1.083E+08,    8.660E+08
+ 
+  Messages RECEIVED per time step
+ 
+   Number:                       8.960E+03
+ 
+        Total counts/bytes per time step:      8.164E+09   6.531E+10
+        Min, max counts/bytes per time step:   7.752E+05,    6.202E+06;    1.156E+06,    9.248E+06
+        Min, max number/counts/bytes per time step per process:      60,    5.413E+07,    4.330E+08;      120,    1.083E+08,    8.660E+08
+ 
+      X-direction inter-process communication statistics:
+ 
+       Avg (total,pack,send,wait,recv,unpack secs):    2.511E+00, 6.842E-01, 2.560E-04, 3.173E-01, 4.216E-04, 1.509E+00
+       StdDev (total,pack,send,wait,recv,unpack secs): 5.394E-01, 1.621E-01, 4.626E-05, 1.254E-01, 1.871E-03, 4.983E-01
+       Max (total,pack,send,wait,recv,unpack secs):    3.356E+00, 1.003E+00, 3.610E-04, 6.253E-01, 1.352E-02, 2.196E+00
+       Min (total,pack,send,wait,recv,unpack secs):    1.666E+00, 3.368E-01, 1.526E-04, 1.515E-01, 9.990E-05, 9.188E-01
+ 
+      Y-direction inter-process communication statistics:
+ 
+       Avg (total,pack,send,wait,recv,unpack secs):    9.254E-01, 2.510E-01, 3.263E-04, 3.939E-01, 1.109E-04, 2.801E-01
+       StdDev (total,pack,send,wait,recv,unpack secs): 2.540E-01, 7.693E-02, 1.365E-04, 1.525E-01, 1.537E-05, 9.128E-02
+       Max (total,pack,send,wait,recv,unpack secs):    1.423E+00, 3.603E-01, 7.386E-04, 7.958E-01, 1.397E-04, 3.991E-01
+       Min (total,pack,send,wait,recv,unpack secs):    5.524E-01, 1.742E-01, 1.409E-04, 1.725E-01, 6.700E-05, 1.778E-01
+ 
+      Z-direction inter-process communication statistics:
+ 
+       Avg (total,pack,send,wait,recv,unpack secs):    2.609E+00, 3.004E-01, 5.289E-04, 2.064E+00, 1.207E-02, 2.322E-01
+       StdDev (total,pack,send,wait,recv,unpack secs): 1.169E+00, 9.612E-02, 1.615E-04, 1.097E+00, 2.071E-02, 8.367E-02
+       Max (total,pack,send,wait,recv,unpack secs):    4.277E+00, 4.992E-01, 8.192E-04, 3.825E+00, 1.144E-01, 4.583E-01
+       Min (total,pack,send,wait,recv,unpack secs):    5.479E-01, 1.474E-01, 2.029E-04, 1.194E-01, 1.073E-04, 8.528E-02
+ 
+ 
+   GRIDSUM performance
+ 
+   Number:                       8.000E+02
+ 
+       Avg (total,compute,reduce secs): 1.197E+01, 9.601E+00, 2.363E+00
+       Max (total,compute,reduce secs): 1.442E+01, 9.877E+00, 5.017E+00
+       Min (total,compute,reduce secs): 1.005E+01, 9.316E+00, 5.850E-01
+ 
+ 
+  Reductions (to all) per time step
+ 
+     Number:                     8.000E+02
+ 
+           Total counts/bytes per time step:   8.000E+02   6.400E+03
+       Min, max counts/bytes per time step:    1.000E+00,    8.000E+00;    1.000E+00,    8.000E+00
+ 
+ ================== End report ===================
+ 
