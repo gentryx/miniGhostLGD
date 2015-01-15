@@ -90,18 +90,18 @@ public:
 class CellInitializer : public SimpleInitializer<Cell>
 {
 public:
-    CellInitializer(const unsigned dimX, const unsigned dimY, const unsigned num_timesteps) : SimpleInitializer<Cell>(Coord<2>(dimX, dimY), num_timesteps)
+    CellInitializer(const unsigned dimX, const unsigned dimY, const unsigned num_timesteps) : SimpleInitializer<Cell>(Coord<2>(dimX, dimY), num_timesteps),
+    dimX(dimX),
+    dimY(dimY)
     {}
 
     virtual void grid(GridBase<Cell, 2> *ret)
     {
         CoordBox<2> rect = ret->boundingBox();
-        int offsetX = 10;
-        int offsetY = 10;
 
-        for (int y = 0; y < 250; ++y) {
-            for (int x = 0; x < 250; ++x) {
-                Coord<2> c(x + offsetX, y + offsetY);
+        for (int y = 0; y < dimY; ++y) {
+            for (int x = 0; x < dimX; ++x) {
+                Coord<2> c(x, y);
                 if (rect.inBounds(c)) {
 					// RANDOM_NUMBER max?
                     ret->set(c, Cell(Random::gen_d()));
@@ -112,9 +112,64 @@ public:
             }
         }
     }
+private:
+	unsigned dimX;
+	unsigned dimY;
+	unsigned dimZ;
 };
 
 
+class ToleranceChecker : public Clonable<ParallelWriter<Cell>, ToleranceChecker>
+{
+public:
+	typedef ParallelWriter<Cell>::GridType GridType;
+	
+	ToleranceChecker(const unsigned outputPeriod = 1, unsigned numberOfVars = 1) :
+	Clonable<ParallelWriter<Cell>, ToleranceChecker>("", outputPeriod),
+	localSum(0),
+	globalSum(0),
+	num_vars(numberOfVars)
+	{
+		
+	}
+	
+	void stepFinished(const GridType& grid,
+        const RegionType& validRegion,
+        const CoordType& globalDimensions,
+        unsigned step,
+        WriterEvent event,
+        std::size_t rank,
+        bool lastCall)
+    { 
+        localSum = 0;  
+        globalSum = 0;
+        CoordBox<2> box = grid.boundingBox(); 
+	
+		for(unsigned int j = 0 ; j < num_vars ; ++j ){
+        	for (CoordBox<2>::Iterator i = box.begin(); i != box.end(); ++i) { 
+        	    localSum += grid.get(*i).temp;
+//         	    gridSum += grid.get(*i).temp[j]; 
+        	}
+		} 
+
+        //gridSum /= box.dimensions.prod(); 
+		std::cout << "localSum(" << step << ") = " << localSum << "\n"; 
+
+		MPI_Allreduce(&localSum, &globalSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+		std::cout << "globalSum(" << step << ") = " << globalSum << "\n";
+//grids_to_sum kram aus mg_bufinit.f    
+//      ERROR_ITER = ABS ( SOURCE_TOTAL(IVAR) - GSUM ) / SOURCE_TOTAL(IVAR)
+//      IF ( ERROR_ITER > ERROR_TOL ) THEN
+
+    }
+        
+private: 
+    double localSum;
+    double globalSum; 
+    unsigned num_vars;
+};
+/*
 class ToleranceChecker : public Clonable<Writer<Cell>, ToleranceChecker> 
 { 
 public: 
@@ -162,50 +217,7 @@ private:
     unsigned num_vars;
 }; 
 
-
-void runSimulation()
-{
-    unsigned dimX = 512;
-    unsigned dimY = 512;
-    unsigned dimZ = 512;
-    //unsigned outputFrequency = 1;
-    unsigned num_vars = 1;
-    unsigned num_timesteps = 1000;
-    unsigned num_spikes = 1;
-	
-	{
-		//SerialSimulator<Cell> sim(new CellInitializer(dimX, dimY, num_timesteps));
-		CellInitializer *init =  new CellInitializer(dimX, dimY, num_timesteps);
-		
-		HiParSimulator::HiParSimulator<Cell, RecursiveBisectionPartition<2> > sim(
-				init,
-				MPILayer().rank() ? 0 : new TracingBalancer(new NoOpBalancer()),
-				num_timesteps,
-				1);
-
-	/*    sim.addWriter(
-			new PPMWriter<Cell>(
-				&Cell::temp,
-				0.0,
-				1.0,
-				"jacobi",
-				outputFrequency,
-				Coord<2>(1, 1)));
-	*/
-	//    sim.addWriter(new TracingWriter<Cell>(outputFrequency, 100));
-		if (MPILayer().rank() == 0) {
-			printf("I'm rank %i and we're adding Writers\n", MPILayer().rank());
-			//ToleranceChecker *toleranceChecker = new ToleranceChecker(outputFrequency, num_vars);
-			//sim.addWriter(toleranceChecker);
-			sim.addWriter(new TracingWriter<Cell>(100, num_timesteps));
-		}
-	//    ToleranceChecker *toleranceChecker = new ToleranceChecker();
-	//    sim.addWriter(toleranceChecker);
-	
-		sim.run();
-	}
-    
-}
+*/
 
 extern "C" void simulate_(int *nx, int *ny, int *nz, int *num_vars, int *num_spikes, int *num_tsteps, double *err_tol)
 {
@@ -247,29 +259,20 @@ extern "C" void simulate_(int *nx, int *ny, int *nz, int *num_vars, int *num_spi
 	//    sim.addWriter(new TracingWriter<Cell>(outputFrequency, 100));
 		if (MPILayer().rank() == 0) {
 			printf("I'm rank %i and we're adding Writers\n", MPILayer().rank());
-			//ToleranceChecker *toleranceChecker = new ToleranceChecker(outputFrequency, num_vars);
-			//sim.addWriter(toleranceChecker);
-			
-			//sim.addWriter(new TracingWriter<Cell>(100, num_timesteps));
 		}
-	    
+		
+		ToleranceChecker *toleranceChecker = new ToleranceChecker(1, *num_vars);
+			sim.addWriter(toleranceChecker);
+	    /*
 	    Writer<Cell> *toleranceChecker = 
 			(MPILayer().rank() == 0) ?
 			new ToleranceChecker() :
 			0;
 	    sim.addWriter(new CollectingWriter<Cell>(toleranceChecker, 0, MPI_COMM_WORLD, MPI_DOUBLE));
-	
+		*/
 		sim.run();
 	}
-//    runSimulation();
-
+	
     MPI_Finalize();
-
+    
 }
-/*
-int main(int argc, char **argv)
-{
-    runSimulation();
-    return 0;
-}
-*/
