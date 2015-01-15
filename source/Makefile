@@ -33,9 +33,9 @@
 #-----------------------------------------------------------------------
 
 # Option: -D_MG_MPI
-#PROTOCOL = -D_MG_MPI
-PROTOCOL = -D_MG_SERIAL
-PROTOCOL += -D_MG_LGD
+PROTOCOL = -D_MG_MPI
+#PROTOCOL = -D_MG_SERIAL
+#PROTOCOL += -D_MG_LGD
 # Compilers
 FC=mpif90
 #FC=gfortran

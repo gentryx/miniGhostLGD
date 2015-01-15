@@ -46,7 +46,8 @@ MODULE MG_OPTIONS_MOD
    INTEGER, PARAMETER ::       &
 
       COMM_METHOD_BSPMA = 10,  &      ! Default
-      COMM_METHOD_SVAF  = 11
+      COMM_METHOD_SVAF  = 11,  &
+      COMM_METHOD_LGD   = 12
 
    INTEGER :: STENCIL
 

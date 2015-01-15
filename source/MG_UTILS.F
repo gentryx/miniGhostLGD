@@ -331,6 +331,10 @@ CONTAINS
          CASE ( COMM_METHOD_SVAF )
 
             WRITE(*,*) 'Communication strategy: one variable at a time (COMM_METHOD_SVAF)'
+         
+         CASE ( COMM_METHOD_LGD )
+
+            WRITE(*,*) 'Communication strategy: one variable at a time (COMM_METHOD_LGD)'
 
          CASE DEFAULT
 
