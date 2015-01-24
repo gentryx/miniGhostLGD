@@ -1261,7 +1261,7 @@ MODULE MG_PROFILING_MOD
      
                CASE ( COMM_METHOD_LGD )
      
-                  WRITE(OUTPUT_LOC,*) 'Communication strategy: one variable at a time (COMM_METHOD_LGD)'
+                  WRITE(OUTPUT_LOC,*) 'Communication strategy: LibGeoDecomp (COMM_METHOD_LGD)'
 
                CASE DEFAULT
       
@@ -1519,7 +1519,7 @@ MODULE MG_PROFILING_MOD
          CASE (COMM_METHOD_SVAF)
             WRITE(OUTPUT_LOC,*) 'Comm_strategy: one variable at a time (COMM_METHOD_SVAF)'
          CASE (COMM_METHOD_LGD)
-            WRITE(OUTPUT_LOC,*) 'Comm_strategy: one variable at a time (COMM_METHOD_LGD)'
+            WRITE(OUTPUT_LOC,*) 'Comm_strategy: LibGeoDecomp (COMM_METHOD_LGD)'
       END SELECT
 
       SELECT CASE (STENCIL)

@@ -10,7 +10,7 @@ MODULE MG_ENV_MOD
       INTEGER, INTENT(IN) :: OUTPUT_LOC
 
       WRITE(OUTPUT_LOC,*) 'code: miniGhost'
-      WRITE(OUTPUT_LOC,*) 'compiled_on: Thu Jan 15 01:33:20 CET 2015'
+      WRITE(OUTPUT_LOC,*) 'compiled_on: Sat Jan 24 09:46:03 CET 2015'
       WRITE(OUTPUT_LOC,*) 'directory: /home/benno/uni/Master/Masterarbeit/MiniGhostLGD/miniGhostLGD/source'
       WRITE(OUTPUT_LOC,*) 'FORTRAN_compiler: mpif90'
       WRITE(OUTPUT_LOC,*) 'C_compiler: mpicc'

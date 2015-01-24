@@ -36,12 +36,10 @@ CONTAINS
    ! Driver for the bulk synchronous parallel with message aggregation 
    ! communication strategy. Called by the Fortran driver subroutine MINI_GHOST.
    
-   ! no more BSPMA or SVAF  its just for LibGeoDecomp 
+   ! no more BSPMA or SVAF - its just for LibGeoDecomp 
    ! Author : Benno Schuepferling
    
    USE MG_CONSTANTS_MOD
-   USE MG_BSPMA_MOD
-   USE MG_BSPMA_DIAGS_MOD
    USE MG_STENCIL_MOD
    USE MG_PROFILING_MOD
    USE MG_SUM_GRID_MOD
@@ -77,69 +75,25 @@ CONTAINS
       ! -------------------
       ! Begin time stepping
       ! -------------------
-
-      WRITE(*,*) 'TEST'
-
-      TIME_START_ALL = MG_TIMER()
-
-      DO ISPIKE = 1, NUM_SPIKES
-
-         CALL MG_INSERT_SPIKE ( ISPIKE, IERR )
-
-         DO TSTEP = 1, NUM_TSTEPS
-
-#if defined _MG_MPI
-            TIME_START = MG_TIMER()
-            IF ( STENCIL == STENCIL_2D5PT .OR. STENCIL == STENCIL_3D7PT ) THEN
-               CALL MG_BSPMA ( IERR )
-               CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA: MG_BSPMA', TSTEP )
-            ELSE IF ( STENCIL == STENCIL_2D9PT .OR. STENCIL == STENCIL_3D27PT ) THEN
-               CALL MG_BSPMA_DIAGS ( IERR )
-               CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA: MG_BSPMA_DIAG', TSTEP )
-            ELSE
-               IERR = -1
-               CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA: Unknown stencil for boundary exchange', STENCIL )
-            END IF
-            MG_PERF%TIME_BSPMA_PE = MG_PERF%TIME_BSPMA_PE + MG_TIMER() - TIME_START
-#endif
-
-            IF ( STENCIL /= STENCIL_NONE ) THEN
-               DO IVAR = 1, NUM_VARS
-                  TIME_START = MG_TIMER()
-                  CALL MG_STENCIL ( IVAR, IERR )
-                  CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA:MG_STENCIL', IVAR )
-                  MG_PERF%TIME_STENCIL_PE = MG_PERF%TIME_STENCIL_PE + MG_TIMER() - TIME_START
-
-                  ! Reduction across GRID option
-                  IF ( GRIDS_TO_SUM(IVAR) ) THEN
-                     TIME_START_2 = MG_TIMER ()
-                     CALL MG_SUM_GRID ( IVAR, GSUM, IERR )
-                     CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA:MG_SUM_GRID', IVAR )
-                     MG_PERF%TIME_SUMGRID_PE = MG_PERF%TIME_SUMGRID_PE + MG_TIMER () - TIME_START_2
-
-                     IF ( MYPE == ROOT_PE ) THEN
-                        ERROR_ITER = ABS ( SOURCE_TOTAL(IVAR) - GSUM ) / SOURCE_TOTAL(IVAR)
-                        IF ( ERROR_ITER > ERROR_TOL ) THEN
-                           WRITE(*,99) TSTEP, IVAR, ERROR_ITER, ERROR_TOL
-                           IERR = -1
-                           CALL MG_ASSERT ( IERR, 'DRIVER_BSPMA', IVAR )
-                        END IF
-                        IF ( MOD ( TSTEP, REPORT_DIFFUSION ) == 0 ) THEN
-                           WRITE(*,99) TSTEP, IVAR, ERROR_ITER, ERROR_TOL
-                        END IF
-                     END IF
-
-                  END IF
-               END DO
-            END IF
-         END DO ! Time step
-      END DO    ! SPIKE insertion.
-
-      MG_PERF%TIME_WALL_PE = MG_TIMER() - TIME_START_ALL
-   
-      RETURN
+      IF (MYPE == ROOT_PE) THEN
+!      WRITE(*,*) 'TEST'
+!      DO ISPIKE =1, NUM_SPIKES
+!         DO IVAR = 1, NUM_VARS
+!!	    SOURCE_TOTAL(IVAR) = IVAR
+!            WRITE (*,*) 'SPIKES(,): ', SPIKES( IVAR, ISPIKE )
+!         END DO
+!      END DO
  
- 99   FORMAT ( 'Time step ', I4, ' for variable ', I4, ' the error is ', 1PE12.5 ' ; error tolerance is ', 1PE8.2, '.' )
+      DO ISPIKE =1, NUM_SPIKES
+         DO IVAR = 0, 3
+!	    SOURCE_TOTAL(IVAR) = IVAR
+            WRITE (*,*) 'SPIKE_LOC(,): ', SPIKE_LOC( IVAR, ISPIKE )
+         END DO
+      END DO
+    END IF
+    
+
+      CALL simulate(GLOBAL_NX, GLOBAL_NY, GLOBAL_NZ, NUM_VARS, NUM_SPIKES, NUM_TSTEPS, ERROR_TOL, SOURCE_TOTAL, SPIKES, SPIKE_LOC)
 
    END SUBROUTINE DRIVER_LGD
 

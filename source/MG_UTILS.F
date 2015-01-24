@@ -235,35 +235,39 @@ CONTAINS
 
       ! Owning MPI rank determines converts the global location to its local array indices.
 
-      DO I = 1, NUM_SPIKES
+      IF ( COMM_METHOD /= COMM_METHOD_LGD ) THEN
 
-         XLOC = SPIKE_LOC ( 1, I ) ! Global values here.
-         YLOC = SPIKE_LOC ( 2, I )
-         ZLOC = SPIKE_LOC ( 3, I )
+         DO I = 1, NUM_SPIKES
 
-         IF ( ( MY_GLOBAL_NX_START <= XLOC ) .AND. ( XLOC <= MY_GLOBAL_NX_END ) .AND.  &
-              ( MY_GLOBAL_NY_START <= YLOC ) .AND. ( YLOC <= MY_GLOBAL_NY_END ) .AND.  &
-              ( MY_GLOBAL_NZ_START <= ZLOC ) .AND. ( ZLOC <= MY_GLOBAL_NZ_END ) ) THEN
+            XLOC = SPIKE_LOC ( 1, I ) ! Global values here.
+            YLOC = SPIKE_LOC ( 2, I )
+            ZLOC = SPIKE_LOC ( 3, I )
+
+            IF ( ( MY_GLOBAL_NX_START <= XLOC ) .AND. ( XLOC <= MY_GLOBAL_NX_END ) .AND.  &
+                 ( MY_GLOBAL_NY_START <= YLOC ) .AND. ( YLOC <= MY_GLOBAL_NY_END ) .AND.  &
+                 ( MY_GLOBAL_NZ_START <= ZLOC ) .AND. ( ZLOC <= MY_GLOBAL_NZ_END ) ) THEN
    
-            SPIKE_LOC ( 0, I ) = MYPE
+               SPIKE_LOC ( 0, I ) = MYPE
 
-            SPIKE_LOC ( 1, I ) = SPIKE_LOC ( 1, I ) - MY_GLOBAL_NX_START
-            SPIKE_LOC ( 2, I ) = SPIKE_LOC ( 2, I ) - MY_GLOBAL_NY_START 
-            SPIKE_LOC ( 3, I ) = SPIKE_LOC ( 3, I ) - MY_GLOBAL_NZ_START 
+               SPIKE_LOC ( 1, I ) = SPIKE_LOC ( 1, I ) - MY_GLOBAL_NX_START
+               SPIKE_LOC ( 2, I ) = SPIKE_LOC ( 2, I ) - MY_GLOBAL_NY_START 
+               SPIKE_LOC ( 3, I ) = SPIKE_LOC ( 3, I ) - MY_GLOBAL_NZ_START 
 
-         ELSE
+            ELSE
 
-            ! Not owner, so set to -1 (to make obvious).
+               ! Not owner, so set to -1 (to make obvious).
 
-            SPIKE_LOC ( 0, I ) = -1
+               SPIKE_LOC ( 0, I ) = -1
 
-            SPIKE_LOC ( 1, I ) = -1
-            SPIKE_LOC ( 2, I ) = -1
-            SPIKE_LOC ( 3, I ) = -1
+               SPIKE_LOC ( 1, I ) = -1
+               SPIKE_LOC ( 2, I ) = -1
+               SPIKE_LOC ( 3, I ) = -1
 
-         END IF
+            END IF
 
-      END DO
+         END DO
+
+      END IF
 
       RETURN
    
@@ -334,7 +338,7 @@ CONTAINS
          
          CASE ( COMM_METHOD_LGD )
 
-            WRITE(*,*) 'Communication strategy: one variable at a time (COMM_METHOD_LGD)'
+            WRITE(*,*) 'Communication strategy: LibGeoDecomp (COMM_METHOD_LGD)'
 
          CASE DEFAULT
 
