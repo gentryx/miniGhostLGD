@@ -10,7 +10,7 @@
 #include <libgeodecomp/parallelization/serialsimulator.h>
 #include <libgeodecomp/parallelization/hiparsimulator.h>
 */
-#include <libgeodecomp.h>
+#include "../libgeodecomp/src/libgeodecomp.h"
 #include <cmath>
 
 using namespace LibGeoDecomp;
@@ -136,10 +136,10 @@ public:
 					else
 					{						
 						// RANDOM_NUMBER max?
-						ret->set(c, Cell(Random::gen_d()));
+						//ret->set(c, Cell(Random::gen_d()));
 						
 						// DEBUG_GRID == 1
-						//ret->set(c, Cell(0.0)); 
+						ret->set(c, Cell(0.0)); 
 					}
 				}
             }
@@ -213,8 +213,8 @@ public:
 		//tag fuer einzigartigkeit
 		MPI_Allreduce(&localSum, &globalSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-		//if( rank == 0 )
-		//	std::cout << "globalSum(" << step << ") = " << std::setprecision (15) << globalSum << "\n";
+		if( rank == 0 )
+			std::cout << "globalSum(" << step << ") = " << std::setprecision (15) << globalSum << "\n";
 
 		for( int j = 0 ; j < num_vars ; ++j )
 		{
