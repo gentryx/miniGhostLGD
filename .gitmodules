@@ -1,0 +1,3 @@
+[submodule "libgeodecomp"]
+	path = libgeodecomp
+	url = https://github.com/gentryx/libgeodecomp
