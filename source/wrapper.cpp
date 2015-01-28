@@ -263,28 +263,17 @@ public:
         SteererFeedback *feedback)
     {
         // gibt es einen cooleren weg dem steerer zu sagen dass er den allerletzten step nichtmehr machen braucht?
-        if ( !lastCall || !(step < numberOfSpikes * getPeriod()) ) 
+        if ( step == numberOfSpikes * getPeriod() ) 
 		{
 			return;
 		}
-		
-		//FRAGE: Ist hier lastcall ueberhaupt richtig? sind wir dann nicht einen step zuspaet mit dem setzen?
-		// wir wollen ja nach t_step schritten einen spike setzen
-		// ich nehme mal an step beginnt bei 0?.. 
-		// vllt auch nicht weil sonst kommen wir gar nicht zu dem problem 
-		// dass step == numberOfSpikes * getPeriod() 
-		
-		//DEBUG
-		//std::cout << "step: " << step << " ioPeriod: " << getPeriod() << "\n";
-		
+			
 		currentSpike = ( (int)step / getPeriod() );
 		
 		const Coord<2> currentCoord( spikeLocation[(currentSpike * 4) + 1], 
 									 spikeLocation[(currentSpike * 4) + 2]);
 		
-		//hier ist es falsch die valid region zu fragen.. was ist wenn der punkt in unserer geisterzone liegt
-		//->besser bounding box		
-		// aber wenn bounding box.. wer addiert dann source total auf?								
+		// setting spikes even in ghostzones							
 		if(validRegion.count(currentCoord))
 		{
 			Cell cell = grid->get(currentCoord);
@@ -300,15 +289,17 @@ public:
 					  << "WARNING: and we 're setting spike " << std::setprecision (15) << cell.temp << " into grid at timestep " << step << "\n"
 					  << "WARNING---------------------------------------------------\n";
 			
-			grid->set(currentCoord, cell);
+			grid->set(currentCoord, cell);	
 			
+		}
+		// everybody refresh sourceTotal - whether or not it belongs to this local grid
+		if( lastCall )
+		{
 			for( int currentVar = 0; currentVar < numberOfVars; currentVar++ )
 			{
 				sourceTotal[currentVar] = sourceTotal[currentVar] + spikes[(currentSpike * numberOfVars) + currentVar];
 			}
-			
 		}
-		///TODO: Don't forget to set sourceTotal!	
 		  
     }
 
