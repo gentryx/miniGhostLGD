@@ -33,6 +33,7 @@ public:
     template<typename COORD_MAP>
     void update(const COORD_MAP& neighborhood, const unsigned& nanoStep)
     {
+		//vectorized SoA
 //	int num_vars = 1;
 //	for(int i = 0; i < num_vars; ++i){
     
@@ -103,9 +104,9 @@ public:
     {
         CoordBox<2> rect = ret->boundingBox();
         
-        //std::cout << "---------------------CELLINIT------------------------------\n"
-		//		  << " X : " << dimX << " Y : " << dimY << "\n"
-		//		  << " BoundingBox : " << rect.dimensions << "\n";
+        std::cout << "---------------------CELLINIT------------------------------\n"
+				  << " X : " << dimX << " Y : " << dimY << "\n"
+				  << " BoundingBox : " << rect.dimensions << "\n";
 
         for (unsigned int y = 0; y < dimY; ++y) 
         {
@@ -121,7 +122,7 @@ public:
 					{
 						std::cout << "WARNING---------------------------------------------------\n"
 								  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
-								  << "WARNING: and we 'resetting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
+								  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
 								  << "WARNING---------------------------------------------------\n";
 			
 						ret->set(c, Cell(spikes[0]));
@@ -179,21 +180,13 @@ public:
 		WriterEvent event,
 		std::size_t rank,
 		bool lastCall)
-    {
-		// early return 
-        if(!lastCall)
-        {
-			return;
-		}
-		
+    {		
 		if( step == 1 )
 		{
 			CoordBox<2> box = validRegion.boundingBox();      
 			std::cout << "rank " << rank << "\'s dim: " << box.dimensions.toString() << "\n";
 		}
 
-		localSum = 0;  
-		globalSum = 0;
 		// valid region  = 48 || boundingbox = 52 ??? aber 50 waere eigentlich ganz nett 
 		// valid region zieht die inneren ghost zones ab! 
 		// haengt zusaetzlich noch bin der Topology ab
@@ -209,21 +202,29 @@ public:
 			}
 		//} 
 		
-		//std::cout << "localSum(" << step << ") = " << localSum << "\n"; 
-		//tag fuer einzigartigkeit
-		MPI_Allreduce(&localSum, &globalSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+		// so we're done summing the local grid
+        if(lastCall)
+        {
+			//tag fuer einzigartigkeit
+			MPI_Allreduce(&localSum, &globalSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-		if( rank == 0 )
-			std::cout << "globalSum(" << step << ") = " << std::setprecision (15) << globalSum << "\n";
+			if( rank == 0 )
+				std::cout << "globalSum(" << step << ") = " << std::setprecision (15) << globalSum << "\n";
 
-		for( int j = 0 ; j < num_vars ; ++j )
-		{
-			if( ( std::abs(src_total[j] - globalSum) / src_total[j] ) > err_tol )
-				std::cout << "error_tol(" << step << ") has not been met\n";
+			// checking error tolerance
+			for( int j = 0 ; j < num_vars ; ++j )
+			{
+				if( ( std::abs(src_total[j] - globalSum) / src_total[j] ) > err_tol )
+					std::cout << "error_tol(" << step << ") has not been met\n";
+			}
+			//grids_to_sum kram aus mg_bufinit.f    
+				//      ERROR_ITER = ABS ( SOURCE_TOTAL(IVAR) - GSUM ) / SOURCE_TOTAL(IVAR)
+			//      IF ( ERROR_ITER > ERROR_TOL ) THEN
+			
+			// reset local and global sum since we're done with this step
+			localSum = 0;
+			globalSum = 0;
 		}
-		//grids_to_sum kram aus mg_bufinit.f    
-			//      ERROR_ITER = ABS ( SOURCE_TOTAL(IVAR) - GSUM ) / SOURCE_TOTAL(IVAR)
-		//      IF ( ERROR_ITER > ERROR_TOL ) THEN
     }
         
 private: 
@@ -296,7 +297,7 @@ public:
 			std::cout << "WARNING---------------------------------------------------\n"
 					  << "WARNING: We're at Location " <<  spikeLocation[(currentSpike * 4) + 1] << ", " << spikeLocation[(currentSpike * 4) + 2] << ", " << spikeLocation[(currentSpike * 4) + 3] << "\n"
 					  << "WARNING: We're rank: " << rank << "\n"
-					  << "WARNING: and we 'resetting spike " << std::setprecision (15) << cell.temp << " into grid at timestep " << step << "\n"
+					  << "WARNING: and we 're setting spike " << std::setprecision (15) << cell.temp << " into grid at timestep " << step << "\n"
 					  << "WARNING---------------------------------------------------\n";
 			
 			grid->set(currentCoord, cell);
