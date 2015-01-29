@@ -23,6 +23,7 @@ public:
         public APITraits::HasStencil<Stencils::VonNeumann<2, 1> >,
         //public APITraits::HasOpaqueMPIDataType<Cell>,
         public APITraits::HasTorusTopology<2>,	// periodische randbedingung - cube ist konstant
+        //public APITraits::HasCubeTopology<2>,
         public APITraits::HasPredefinedMPIDataType<double>       
     {};
 
@@ -37,14 +38,8 @@ public:
 //	int num_vars = 1;
 //	for(int i = 0; i < num_vars; ++i){
     
-/*	        temp = (neighborhood[Coord<2>( 0, -1)].temp +
-        	        neighborhood[Coord<2>(-1,  0)].temp +
-               		neighborhood[Coord<2>( 0,  0)].temp +
-                	neighborhood[Coord<2>( 1,  0)].temp +
-                	neighborhood[Coord<2>( 0,  1)].temp) * (1.0 / 5.0);
-
-*/
 // 		*** 2D5PT ***
+		//temp = neighborhood[FixedCoord<0,  0>()].temp;
 
 		temp = (neighborhood[FixedCoord<-1,  0>()].temp +
 			neighborhood[FixedCoord< 0, -1>()].temp +
@@ -104,10 +99,6 @@ public:
     {
         CoordBox<2> rect = ret->boundingBox();
         
-        std::cout << "---------------------CELLINIT------------------------------\n"
-				  << " X : " << dimX << " Y : " << dimY << "\n"
-				  << " BoundingBox : " << rect.dimensions << "\n";
-
         for (unsigned int y = 0; y < dimY; ++y) 
         {
             for (unsigned int x = 0; x < dimX; ++x) 
@@ -115,36 +106,38 @@ public:
                 Coord<2> c(x, y);
                 if (rect.inBounds(c)) 
                 {
+					
 					///TODO: array
 					// initial spike
-					if( (x == (unsigned) spikeLocation[1]) &&
-						(y == (unsigned) spikeLocation[2]) )
+					if( (x == (unsigned) spikeLocation[1] ) &&
+						(y == (unsigned) spikeLocation[2] ) )
 					{
+						
 						std::cout << "WARNING---------------------------------------------------\n"
 								  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
 								  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
 								  << "WARNING---------------------------------------------------\n";
 			
-						ret->set(c, Cell(spikes[0]));
-						
-						for( int currentVar =0; currentVar< numberOfVars; currentVar++ )
-						{
-							sourceTotal[currentVar] = sourceTotal[currentVar] + spikes[currentVar];
-						}
-						
-						
+						ret->set(c, Cell(spikes[0]));	
+																	
 					}
 					else
 					{						
 						// RANDOM_NUMBER max?
-						//ret->set(c, Cell(Random::gen_d()));
+						ret->set(c, Cell(Random::gen_d()));
 						
 						// DEBUG_GRID == 1
-						ret->set(c, Cell(0.0)); 
+						//ret->set(c, Cell(0.0)); 
 					}
 				}
             }
         }
+        
+        // update sourceTotal on every node
+		for( int currentVar =0; currentVar< numberOfVars; currentVar++ )
+		{
+			sourceTotal[currentVar] = sourceTotal[currentVar] + spikes[currentVar];
+		}
     }
 private:
     unsigned dimX;
@@ -181,27 +174,15 @@ public:
 		std::size_t rank,
 		bool lastCall)
     {		
-		if( step == 1 )
-		{
-			CoordBox<2> box = validRegion.boundingBox();      
-			std::cout << "rank " << rank << "\'s dim: " << box.dimensions.toString() << "\n";
-		}
-
-		// valid region  = 48 || boundingbox = 52 ??? aber 50 waere eigentlich ganz nett 
-		// valid region zieht die inneren ghost zones ab! 
-		// haengt zusaetzlich noch bin der Topology ab
-
-		// FRAGE: SIND HIER DIE GHOSTZONES DABEI??
-		CoordBox<2> box = validRegion.boundingBox(); 
 		
 		//for( int j = 0 ; j < num_vars ; ++j )
 		//{
-			for (CoordBox<2>::Iterator i = box.begin(); i != box.end(); ++i) { 
+			for (RegionType::Iterator i = validRegion.begin(); i != validRegion.end(); ++i) { 
 				localSum += grid.get(*i).temp;
 				//gridSum[j] += grid.get(*i).temp[j]; 
 			}
 		//} 
-		
+				
 		// so we're done summing the local grid
         if(lastCall)
         {
@@ -210,16 +191,17 @@ public:
 
 			if( rank == 0 )
 				std::cout << "globalSum(" << step << ") = " << std::setprecision (15) << globalSum << "\n";
-
+			
+			// we're still missing the feature how many of our grids (variables in this case) should be summed
+			//(see MG_BUFINIT.F)
+			
+			int j = 0;
 			// checking error tolerance
-			for( int j = 0 ; j < num_vars ; ++j )
-			{
+			//for( int j = 0 ; j < num_vars ; ++j )
+			//{
 				if( ( std::abs(src_total[j] - globalSum) / src_total[j] ) > err_tol )
 					std::cout << "error_tol(" << step << ") has not been met\n";
-			}
-			//grids_to_sum kram aus mg_bufinit.f    
-				//      ERROR_ITER = ABS ( SOURCE_TOTAL(IVAR) - GSUM ) / SOURCE_TOTAL(IVAR)
-			//      IF ( ERROR_ITER > ERROR_TOL ) THEN
+			//}
 			
 			// reset local and global sum since we're done with this step
 			localSum = 0;
