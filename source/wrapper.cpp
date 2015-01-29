@@ -20,9 +20,9 @@ class Cell
 public:
     class API :
         public APITraits::HasFixedCoordsOnlyUpdate,
-        public APITraits::HasStencil<Stencils::VonNeumann<2, 1> >,
+        public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >,
         //public APITraits::HasOpaqueMPIDataType<Cell>,
-        public APITraits::HasTorusTopology<2>,	// periodische randbedingung - cube ist konstant
+        public APITraits::HasTorusTopology<3>,	// periodische randbedingung - cube ist konstant
         //public APITraits::HasCubeTopology<2>,
         public APITraits::HasPredefinedMPIDataType<double>       
     {};
@@ -41,12 +41,18 @@ public:
 // 		*** 2D5PT ***
 		//temp = neighborhood[FixedCoord<0,  0>()].temp;
 
+		temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
+			neighborhood[FixedCoord< 0, -1,  0>()].temp +
+			neighborhood[FixedCoord< 0,  0,  0>()].temp +
+			neighborhood[FixedCoord< 0,  1,  0>()].temp +
+			neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
+/*
 		temp = (neighborhood[FixedCoord<-1,  0>()].temp +
 			neighborhood[FixedCoord< 0, -1>()].temp +
 			neighborhood[FixedCoord< 0,  0>()].temp +
 			neighborhood[FixedCoord< 0,  1>()].temp +
 			neighborhood[FixedCoord< 1,  0>()].temp) * (1.0 / 5.0);
-			
+*/			
 /*		temp = (neighborhood[Coord<2>(-1,  0)].temp +
 			neighborhood[Coord<2>( 0, -1)].temp +
 			neighborhood[Coord<2>( 0,  0)].temp +
@@ -84,10 +90,11 @@ public:
 class CellInitializer : public SimpleInitializer<Cell>
 {
 public:
-    CellInitializer(const unsigned dimX, const unsigned dimY, const unsigned num_timesteps, int numVars, double *sourceTotal_, double *spikes_ , int *spikeLoc) :
-    SimpleInitializer<Cell>(Coord<2>(dimX, dimY), num_timesteps),
+    CellInitializer(const unsigned dimX, const unsigned dimY, const unsigned dimZ, const unsigned num_timesteps, int numVars, double *sourceTotal_, double *spikes_ , int *spikeLoc) :
+    SimpleInitializer<Cell>(Coord<3>(dimX, dimY, dimZ), num_timesteps),
     dimX(dimX),
     dimY(dimY),
+    dimZ(dimZ),
     numberOfVars(numVars)
     {
 		sourceTotal = sourceTotal_;
@@ -95,39 +102,44 @@ public:
 		spikeLocation = spikeLoc;
 	}
 
-    virtual void grid(GridBase<Cell, 2> *ret)
+    virtual void grid(GridBase<Cell, 3> *ret)
     {
-        CoordBox<2> rect = ret->boundingBox();
+		
+        CoordBox<3> rect = ret->boundingBox();
         
-        for (unsigned int y = 0; y < dimY; ++y) 
-        {
-            for (unsigned int x = 0; x < dimX; ++x) 
-            {
-                Coord<2> c(x, y);
-                if (rect.inBounds(c)) 
-                {
-					
-					///TODO: array
-					// initial spike
-					if( (x == (unsigned) spikeLocation[1] ) &&
-						(y == (unsigned) spikeLocation[2] ) )
+        for (unsigned int z = 0; z < dimZ; ++z) 
+		{
+			for (unsigned int y = 0; y < dimY; ++y) 
+			{
+				for (unsigned int x = 0; x < dimX; ++x) 
+				{
+					Coord<3> c(x, y, z);
+					if (rect.inBounds(c)) 
 					{
 						
-						std::cout << "WARNING---------------------------------------------------\n"
-								  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
-								  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
-								  << "WARNING---------------------------------------------------\n";
-			
-						ret->set(c, Cell(spikes[0]));	
-																	
-					}
-					else
-					{						
-						// RANDOM_NUMBER max?
-						ret->set(c, Cell(Random::gen_d()));
-						
-						// DEBUG_GRID == 1
-						//ret->set(c, Cell(0.0)); 
+						///TODO: array
+						// initial spike
+						if( (x == (unsigned) spikeLocation[1] ) &&
+							(y == (unsigned) spikeLocation[2] ) &&
+							(z == (unsigned) spikeLocation[3] ) )
+						{
+							
+							std::cout << "WARNING---------------------------------------------------\n"
+									  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
+									  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
+									  << "WARNING---------------------------------------------------\n";
+				
+							ret->set(c, Cell(spikes[0]));	
+																		
+						}
+						else
+						{						
+							// RANDOM_NUMBER max?
+							ret->set(c, Cell(Random::gen_d()));
+							
+							// DEBUG_GRID == 1
+							//ret->set(c, Cell(0.0)); 
+						}
 					}
 				}
             }
@@ -252,8 +264,9 @@ public:
 			
 		currentSpike = ( (int)step / getPeriod() );
 		
-		const Coord<2> currentCoord( spikeLocation[(currentSpike * 4) + 1], 
-									 spikeLocation[(currentSpike * 4) + 2]);
+		const Coord<3> currentCoord( spikeLocation[(currentSpike * 4) + 1], 
+									 spikeLocation[(currentSpike * 4) + 2],
+									 spikeLocation[(currentSpike * 4) + 3]);
 		
 		// setting spikes even in ghostzones							
 		if(validRegion.count(currentCoord))
@@ -330,10 +343,10 @@ extern "C" void simulate_(int *nx, int *ny, int *nz, int *num_vars, int *num_spi
     Typemaps::initializeMaps();
     {
 		//SerialSimulator<Cell> sim(new CellInitializer(dimX, dimY, num_timesteps));
-		CellInitializer *init =  new CellInitializer(*nx, *ny, (*num_tsteps * *num_spikes), *num_vars, source_total, spikes, spike_loc);
+		CellInitializer *init =  new CellInitializer(*nx, *ny, *nz, (*num_tsteps * *num_spikes), *num_vars, source_total, spikes, spike_loc);
 		
 		//CheckerBoarding		
-		HiParSimulator::HiParSimulator<Cell, RecursiveBisectionPartition<2> > sim(
+		HiParSimulator::HiParSimulator<Cell, RecursiveBisectionPartition<3> > sim(
 				init,
 				//MPILayer().rank() ? 0 : new TracingBalancer(new NoOpBalancer()),
 				0,
