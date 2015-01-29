@@ -10,13 +10,13 @@ MODULE MG_ENV_MOD
       INTEGER, INTENT(IN) :: OUTPUT_LOC
 
       WRITE(OUTPUT_LOC,*) 'code: miniGhost'
-      WRITE(OUTPUT_LOC,*) 'compiled_on: Mon Jan 12 06:09:56 CET 2015'
-      WRITE(OUTPUT_LOC,*) 'directory: /home/benno/uni/Master/Masterarbeit/MiniGhostv0.9/source'
+      WRITE(OUTPUT_LOC,*) 'compiled_on: Sat Jan 24 09:46:03 CET 2015'
+      WRITE(OUTPUT_LOC,*) 'directory: /home/benno/uni/Master/Masterarbeit/MiniGhostLGD/miniGhostLGD/source'
       WRITE(OUTPUT_LOC,*) 'FORTRAN_compiler: mpif90'
       WRITE(OUTPUT_LOC,*) 'C_compiler: mpicc'
       WRITE(OUTPUT_LOC,*) 'linker: g++'
-      WRITE(OUTPUT_LOC,*) 'FORTRAN_flags: -D_MG_SERIAL -D_MG_LGD -D_MG_INT4 -D_MG_REAL8 -ffree-form -ffree-line-length-0'
-      WRITE(OUTPUT_LOC,*) 'C_flags: -D_MG_SERIAL -D_MG_LGD -Df2c_'
+      WRITE(OUTPUT_LOC,*) 'FORTRAN_flags: -D_MG_MPI -D_MG_INT4 -D_MG_REAL8 -ffree-form -ffree-line-length-0'
+      WRITE(OUTPUT_LOC,*) 'C_flags: -D_MG_MPI -Df2c_'
       WRITE(OUTPUT_LOC,*) 'arch: '
       WRITE(OUTPUT_LOC,*) 'hostname: benno-laptop'
       WRITE(OUTPUT_LOC,*) 'module_list./capture_env: line44:module:commandnotfound'
