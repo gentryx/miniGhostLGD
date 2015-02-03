@@ -23,7 +23,7 @@ public:
         public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >,
         //public APITraits::HasOpaqueMPIDataType<Cell>,
         public APITraits::HasTorusTopology<3>,	// periodische randbedingung - cube ist konstant
-        //public APITraits::HasCubeTopology<2>,
+        //public APITraits::HasCubeTopology<3>,
         public APITraits::HasPredefinedMPIDataType<double>       
     {};
 
@@ -39,26 +39,12 @@ public:
 //	for(int i = 0; i < num_vars; ++i){
     
 // 		*** 2D5PT ***
-		//temp = neighborhood[FixedCoord<0,  0>()].temp;
-
 		temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
 			neighborhood[FixedCoord< 0, -1,  0>()].temp +
 			neighborhood[FixedCoord< 0,  0,  0>()].temp +
 			neighborhood[FixedCoord< 0,  1,  0>()].temp +
 			neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
-/*
-		temp = (neighborhood[FixedCoord<-1,  0>()].temp +
-			neighborhood[FixedCoord< 0, -1>()].temp +
-			neighborhood[FixedCoord< 0,  0>()].temp +
-			neighborhood[FixedCoord< 0,  1>()].temp +
-			neighborhood[FixedCoord< 1,  0>()].temp) * (1.0 / 5.0);
-*/			
-/*		temp = (neighborhood[Coord<2>(-1,  0)].temp +
-			neighborhood[Coord<2>( 0, -1)].temp +
-			neighborhood[Coord<2>( 0,  0)].temp +
-			neighborhood[Coord<2>( 0,  1)].temp +
-			neighborhood[Coord<2>( 1,  0)].temp) * (1.0 / 5.0);
-*/
+
 /*		temp[i] = (neighborhood[Coord<2>(-1,  0)].temp[i] +
 			   neighborhood[Coord<2>( 0, -1)].temp[i] +
 			   neighborhood[Coord<2>( 0,  0)].temp[i] +
@@ -67,17 +53,17 @@ public:
 
 */
 // 		*** 2D9PT ***
-/*		temp = (neighborhood[Coord<2>(-1, -1)].temp +
-			neighborhood[Coord<2>(-1,  0)].temp +
-			neighborhood[Coord<2>(-1,  1)].temp +
+/*		temp = (neighborhood[FixedCoord<-1, -1,  0>()].temp +
+			neighborhood[FixedCoord<-1,  0,  0>()].temp +
+			neighborhood[FixedCoord<-1,  1,  0>()].temp +
 			
-			neighborhood[Coord<2>( 0, -1)].temp +
-			neighborhood[Coord<2>( 0,  0)].temp +
-			neighborhood[Coord<2>( 0,  1)].temp +
+			neighborhood[FixedCoord< 0, -1,  0>()].temp +
+			neighborhood[FixedCoord< 0,  0,  0>()].temp +
+			neighborhood[FixedCoord< 0,  1,  0>()].temp +
 			
-			neighborhood[Coord<2>( 1, -1)].temp +
-			neighborhood[Coord<2>( 1,  0)].temp +
-			neighborhood[Coord<2>( 1,  1)].temp) * (1.0 / 9.0);
+			neighborhood[FixedCoord< 1, -1,  0>()].temp +
+			neighborhood[FixedCoord< 1,  0,  0>()].temp +
+			neighborhood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
 */			
 //	}
    }
@@ -106,45 +92,33 @@ public:
     {
 		
         CoordBox<3> rect = ret->boundingBox();
+        std::cout << rect.dimensions << std::endl;
         
-        for (unsigned int z = 0; z < dimZ; ++z) 
+        for (CoordBox<3>::Iterator i = rect.begin(); i != rect.end(); ++i)
+        {
+			// RANDOM_NUMBER max?
+			ret->set(*i, Cell(Random::gen_d()));
+			
+			// DEBUG_GRID == 1
+			//ret->set(*i, Cell(0.0));
+		}
+		
+		/// Todo: Set multiple first spikes
+		
+		Coord<3> c( (unsigned) spikeLocation[1],
+					(unsigned) spikeLocation[2],
+					(unsigned) spikeLocation[3]);
+		
+		if (rect.inBounds(c)) 
 		{
-			for (unsigned int y = 0; y < dimY; ++y) 
-			{
-				for (unsigned int x = 0; x < dimX; ++x) 
-				{
-					Coord<3> c(x, y, z);
-					if (rect.inBounds(c)) 
-					{
-						
-						///TODO: array
-						// initial spike
-						if( (x == (unsigned) spikeLocation[1] ) &&
-							(y == (unsigned) spikeLocation[2] ) &&
-							(z == (unsigned) spikeLocation[3] ) )
-						{
-							
-							std::cout << "WARNING---------------------------------------------------\n"
-									  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
-									  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
-									  << "WARNING---------------------------------------------------\n";
-				
-							ret->set(c, Cell(spikes[0]));	
-																		
-						}
-						else
-						{						
-							// RANDOM_NUMBER max?
-							ret->set(c, Cell(Random::gen_d()));
-							
-							// DEBUG_GRID == 1
-							//ret->set(c, Cell(0.0)); 
-						}
-					}
-				}
-            }
-        }
-        
+				std::cout << "WARNING---------------------------------------------------\n"
+						  << "WARNING: We're at Location " <<  spikeLocation[1] << ", " << spikeLocation[2] << ", " << spikeLocation[3] << "\n"
+						  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
+						  << "WARNING---------------------------------------------------\n";
+	
+				ret->set(c, Cell(spikes[0]));
+		}
+		    
         // update sourceTotal on every node
 		for( int currentVar =0; currentVar< numberOfVars; currentVar++ )
 		{
@@ -334,7 +308,7 @@ extern "C" void simulate_(int *nx, int *ny, int *nz, int *num_vars, int *num_spi
 			}
 		}   
 	}
-*/	
+*/
 /*    for( int j = 0 ; j < *num_vars ; ++j )
     {	
         std::cout << "source_total[" << j << "] = " << source_total[j] << "\n";
