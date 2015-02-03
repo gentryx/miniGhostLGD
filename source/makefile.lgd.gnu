@@ -76,15 +76,17 @@ FFLAGS += -ffree-line-length-0
 
 LD = $(CXX)
 LDFLAGS = $(CFLAGS)
+
+CPPFLAGS = -std=c++11  -Wall -Wno-sign-promo -Wnon-virtual-dtor -march=native -fopenmp -O3
 LIBS = -lgfortran 
 
-#linking with g++ so we need this for fortran libs
+# linking with g++ so we need this for fortran libs
 LIBS += $(shell mpifort --showme:link)
 
-#get dependencies for lgd from pkg-config - export first
-#( e.g. export PKG_CONFIG_PATH=../libgeodecomp/build/ )
-CPPFLAGS += $(shell pkg-config --cflags libgeodecomp)
-LIBS += $(shell pkg-config --libs libgeodecomp)
+# get dependencies for lgd from pkg-config 
+# just expecting people to build lgd in ../libgedecomp/build/
+CPPFLAGS += $(shell pkg-config --cflags ../libgeodecomp/build/libgeodecomp.pc)
+LIBS += $(shell pkg-config --libs ../libgeodecomp/build/libgeodecomp.pc)
 
 
 include make_targets
