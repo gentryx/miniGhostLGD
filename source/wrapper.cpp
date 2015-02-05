@@ -20,7 +20,8 @@ class Cell
 public:
     class API :
         public APITraits::HasFixedCoordsOnlyUpdate,
-        public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >,
+        //public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >, 
+        public APITraits::HasStencil<Stencils::Moore<3, 1> >, //contains all spatial neighbours
         //public APITraits::HasOpaqueMPIDataType<Cell>,
         public APITraits::HasTorusTopology<3>,	// periodische randbedingung - cube ist konstant
         //public APITraits::HasCubeTopology<3>,
@@ -37,14 +38,14 @@ public:
 		//vectorized SoA
 //	int num_vars = 1;
 //	for(int i = 0; i < num_vars; ++i){
-    
+  
 // 		*** 2D5PT ***
-		temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
+/*		temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
 			neighborhood[FixedCoord< 0, -1,  0>()].temp +
 			neighborhood[FixedCoord< 0,  0,  0>()].temp +
 			neighborhood[FixedCoord< 0,  1,  0>()].temp +
 			neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
-
+*/
 /*		temp[i] = (neighborhood[Coord<2>(-1,  0)].temp[i] +
 			   neighborhood[Coord<2>( 0, -1)].temp[i] +
 			   neighborhood[Coord<2>( 0,  0)].temp[i] +
@@ -66,6 +67,79 @@ public:
 			neighborhood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
 */			
 //	}
+/*
+// 	*** 2D5PT ***
+	temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0, -1,  0>()].temp +
+		neighborhood[FixedCoord< 0,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0,  1,  0>()].temp +
+		neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
+
+
+// 	*** 2D9PT ***
+	temp = (neighborhood[FixedCoord<-1, -1,  0>()].temp +
+		neighborhood[FixedCoord<-1,  0,  0>()].temp +
+		neighborhood[FixedCoord<-1,  1,  0>()].temp +
+		
+		neighborhood[FixedCoord< 0, -1,  0>()].temp +
+		neighborhood[FixedCoord< 0,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0,  1,  0>()].temp +
+		
+		neighborhood[FixedCoord< 1, -1,  0>()].temp +
+		neighborhood[FixedCoord< 1,  0,  0>()].temp +
+		neighborhood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
+		
+
+// 	*** 3D7PT ***
+	temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +		
+		neighborhood[FixedCoord< 0, -1,  0>()].temp +
+		neighborhood[FixedCoord< 0,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0,  1,  0>()].temp +	
+		neighborhood[FixedCoord< 1,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0,  0, -1>()].temp +
+		neighborhood[FixedCoord< 0,  0,  1>()].temp) * (1.0 / 7.0);
+
+*/
+// 	*** 3D27PT ***
+		// *** BACK ***
+	temp = (neighborhood[FixedCoord<-1, -1, -1>()].temp +
+		neighborhood[FixedCoord<-1,  0, -1>()].temp +
+		neighborhood[FixedCoord<-1,  1, -1>()].temp +
+		
+		neighborhood[FixedCoord< 0, -1, -1>()].temp +
+		neighborhood[FixedCoord< 0,  0, -1>()].temp +
+		neighborhood[FixedCoord< 0,  1, -1>()].temp +
+		
+		neighborhood[FixedCoord< 1, -1, -1>()].temp +
+		neighborhood[FixedCoord< 1,  0, -1>()].temp +
+		neighborhood[FixedCoord< 1,  1, -1>()].temp +
+
+		// *** MIDDLE ***
+		neighborhood[FixedCoord<-1, -1,  0>()].temp +
+		neighborhood[FixedCoord<-1,  0,  0>()].temp +
+		neighborhood[FixedCoord<-1,  1,  0>()].temp +
+		
+		neighborhood[FixedCoord< 0, -1,  0>()].temp +
+		neighborhood[FixedCoord< 0,  0,  0>()].temp +
+		neighborhood[FixedCoord< 0,  1,  0>()].temp +
+		
+		neighborhood[FixedCoord< 1, -1,  0>()].temp +
+		neighborhood[FixedCoord< 1,  0,  0>()].temp +
+		neighborhood[FixedCoord< 1,  1,  0>()].temp +
+
+		// *** FRONT ***
+		neighborhood[FixedCoord<-1, -1,  1>()].temp +
+		neighborhood[FixedCoord<-1,  0,  1>()].temp +
+		neighborhood[FixedCoord<-1,  1,  1>()].temp +
+		
+		neighborhood[FixedCoord< 0, -1,  1>()].temp +
+		neighborhood[FixedCoord< 0,  0,  1>()].temp +
+		neighborhood[FixedCoord< 0,  1,  1>()].temp +
+		
+		neighborhood[FixedCoord< 1, -1,  1>()].temp +
+		neighborhood[FixedCoord< 1,  0,  1>()].temp +		
+		neighborhood[FixedCoord< 1,  1,  1>()].temp) * (1.0 / 27.0);
+
    }
 
     double temp;
@@ -96,6 +170,7 @@ public:
         
         for (CoordBox<3>::Iterator i = rect.begin(); i != rect.end(); ++i)
         {
+			//seede den random nr generator 
 			// RANDOM_NUMBER max?
 			ret->set(*i, Cell(Random::gen_d()));
 			
