@@ -20,8 +20,9 @@ class Cell
 public:
     class API :
         public APITraits::HasFixedCoordsOnlyUpdate,
+        public APITraits::HasUpdateLineX,
         //public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >, 
-        public APITraits::HasStencil<Stencils::Moore<3, 1> >, //contains all spatial neighbours
+		public APITraits::HasStencil<Stencils::Moore<3, 1> >, //contains all spatial neighbours
         //public APITraits::HasOpaqueMPIDataType<Cell>,
         public APITraits::HasTorusTopology<3>,	// periodische randbedingung - cube ist konstant
         //public APITraits::HasCubeTopology<3>,
@@ -32,113 +33,85 @@ public:
         temp(v)
     {}
 
-    template<typename COORD_MAP>
-    void update(const COORD_MAP& neighborhood, const unsigned& nanoStep)
+	template<typename NEIGHBORHOOD>
+    static void updateLineX(Cell *target, long *x, long endX, const NEIGHBORHOOD& hood, int /* nanoStep */)
     {
-		//vectorized SoA
+
+//	vectorized SoA
 //	int num_vars = 1;
 //	for(int i = 0; i < num_vars; ++i){
-  
-// 		*** 2D5PT ***
-/*		temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
-			neighborhood[FixedCoord< 0, -1,  0>()].temp +
-			neighborhood[FixedCoord< 0,  0,  0>()].temp +
-			neighborhood[FixedCoord< 0,  1,  0>()].temp +
-			neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
-*/
-/*		temp[i] = (neighborhood[Coord<2>(-1,  0)].temp[i] +
-			   neighborhood[Coord<2>( 0, -1)].temp[i] +
-			   neighborhood[Coord<2>( 0,  0)].temp[i] +
-			   neighborhood[Coord<2>( 0,  1)].temp[i] +
-			   neighborhood[Coord<2>( 1,  0)].temp[i]) * (1.0 / 5.0);
-
-*/
-// 		*** 2D9PT ***
-/*		temp = (neighborhood[FixedCoord<-1, -1,  0>()].temp +
-			neighborhood[FixedCoord<-1,  0,  0>()].temp +
-			neighborhood[FixedCoord<-1,  1,  0>()].temp +
-			
-			neighborhood[FixedCoord< 0, -1,  0>()].temp +
-			neighborhood[FixedCoord< 0,  0,  0>()].temp +
-			neighborhood[FixedCoord< 0,  1,  0>()].temp +
-			
-			neighborhood[FixedCoord< 1, -1,  0>()].temp +
-			neighborhood[FixedCoord< 1,  0,  0>()].temp +
-			neighborhood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
-*/			
-//	}
+		for (; *x < endX; ++x) 
+		{	
+// 			*** 2D5PT ***
+            target[*x].temp = (hood[FixedCoord<-1,  0,  0>()].temp +
+				hood[FixedCoord< 0, -1,  0>()].temp +
+				hood[FixedCoord< 0,  0,  0>()].temp +
+				hood[FixedCoord< 0,  1,  0>()].temp +
+				hood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
 /*
-// 	*** 2D5PT ***
-	temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0, -1,  0>()].temp +
-		neighborhood[FixedCoord< 0,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0,  1,  0>()].temp +
-		neighborhood[FixedCoord< 1,  0,  0>()].temp) * (1.0 / 5.0);
+//	 		*** 2D9PT ***
+			target[*x].temp = (hood[FixedCoord<-1, -1,  0>()].temp +
+				hood[FixedCoord<-1,  0,  0>()].temp +
+				hood[FixedCoord<-1,  1,  0>()].temp +
+				
+				hood[FixedCoord< 0, -1,  0>()].temp +
+				hood[FixedCoord< 0,  0,  0>()].temp +
+				hood[FixedCoord< 0,  1,  0>()].temp +
+				
+				hood[FixedCoord< 1, -1,  0>()].temp +
+				hood[FixedCoord< 1,  0,  0>()].temp +
+				hood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
+			
+// 			*** 3D7PT ***
+			target[*x].temp = (hood[FixedCoord<-1,  0,  0>()].temp +		
+				hood[FixedCoord< 0, -1,  0>()].temp +
+				hood[FixedCoord< 0,  0,  0>()].temp +
+				hood[FixedCoord< 0,  1,  0>()].temp +	
+				hood[FixedCoord< 1,  0,  0>()].temp +
+				hood[FixedCoord< 0,  0, -1>()].temp +
+				hood[FixedCoord< 0,  0,  1>()].temp) * (1.0 / 7.0);
 
+// 			*** 3D27PT ***
+			target[*x].temp = (hood[FixedCoord<-1, -1, -1>()].temp +
+				hood[FixedCoord<-1,  0, -1>()].temp +
+				hood[FixedCoord<-1,  1, -1>()].temp +
+				
+				hood[FixedCoord< 0, -1, -1>()].temp +
+				hood[FixedCoord< 0,  0, -1>()].temp +
+				hood[FixedCoord< 0,  1, -1>()].temp +
+				
+				hood[FixedCoord< 1, -1, -1>()].temp +
+				hood[FixedCoord< 1,  0, -1>()].temp +
+				hood[FixedCoord< 1,  1, -1>()].temp +
 
-// 	*** 2D9PT ***
-	temp = (neighborhood[FixedCoord<-1, -1,  0>()].temp +
-		neighborhood[FixedCoord<-1,  0,  0>()].temp +
-		neighborhood[FixedCoord<-1,  1,  0>()].temp +
-		
-		neighborhood[FixedCoord< 0, -1,  0>()].temp +
-		neighborhood[FixedCoord< 0,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0,  1,  0>()].temp +
-		
-		neighborhood[FixedCoord< 1, -1,  0>()].temp +
-		neighborhood[FixedCoord< 1,  0,  0>()].temp +
-		neighborhood[FixedCoord< 1,  1,  0>()].temp) * (1.0 / 9.0);
-		
+				// *** MIDDLE ***
+				hood[FixedCoord<-1, -1,  0>()].temp +
+				hood[FixedCoord<-1,  0,  0>()].temp +
+				hood[FixedCoord<-1,  1,  0>()].temp +
+				
+				hood[FixedCoord< 0, -1,  0>()].temp +
+				hood[FixedCoord< 0,  0,  0>()].temp +
+				hood[FixedCoord< 0,  1,  0>()].temp +
+				
+				hood[FixedCoord< 1, -1,  0>()].temp +
+				hood[FixedCoord< 1,  0,  0>()].temp +
+				hood[FixedCoord< 1,  1,  0>()].temp +
 
-// 	*** 3D7PT ***
-	temp = (neighborhood[FixedCoord<-1,  0,  0>()].temp +		
-		neighborhood[FixedCoord< 0, -1,  0>()].temp +
-		neighborhood[FixedCoord< 0,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0,  1,  0>()].temp +	
-		neighborhood[FixedCoord< 1,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0,  0, -1>()].temp +
-		neighborhood[FixedCoord< 0,  0,  1>()].temp) * (1.0 / 7.0);
+				// *** FRONT ***
+				hood[FixedCoord<-1, -1,  1>()].temp +
+				hood[FixedCoord<-1,  0,  1>()].temp +
+				hood[FixedCoord<-1,  1,  1>()].temp +
+				
+				hood[FixedCoord< 0, -1,  1>()].temp +
+				hood[FixedCoord< 0,  0,  1>()].temp +
+				hood[FixedCoord< 0,  1,  1>()].temp +
+				
+				hood[FixedCoord< 1, -1,  1>()].temp +
+				hood[FixedCoord< 1,  0,  1>()].temp +		
+				hood[FixedCoord< 1,  1,  1>()].temp) * (1.0 / 27.0);
 
-*/
-// 	*** 3D27PT ***
-		// *** BACK ***
-	temp = (neighborhood[FixedCoord<-1, -1, -1>()].temp +
-		neighborhood[FixedCoord<-1,  0, -1>()].temp +
-		neighborhood[FixedCoord<-1,  1, -1>()].temp +
-		
-		neighborhood[FixedCoord< 0, -1, -1>()].temp +
-		neighborhood[FixedCoord< 0,  0, -1>()].temp +
-		neighborhood[FixedCoord< 0,  1, -1>()].temp +
-		
-		neighborhood[FixedCoord< 1, -1, -1>()].temp +
-		neighborhood[FixedCoord< 1,  0, -1>()].temp +
-		neighborhood[FixedCoord< 1,  1, -1>()].temp +
-
-		// *** MIDDLE ***
-		neighborhood[FixedCoord<-1, -1,  0>()].temp +
-		neighborhood[FixedCoord<-1,  0,  0>()].temp +
-		neighborhood[FixedCoord<-1,  1,  0>()].temp +
-		
-		neighborhood[FixedCoord< 0, -1,  0>()].temp +
-		neighborhood[FixedCoord< 0,  0,  0>()].temp +
-		neighborhood[FixedCoord< 0,  1,  0>()].temp +
-		
-		neighborhood[FixedCoord< 1, -1,  0>()].temp +
-		neighborhood[FixedCoord< 1,  0,  0>()].temp +
-		neighborhood[FixedCoord< 1,  1,  0>()].temp +
-
-		// *** FRONT ***
-		neighborhood[FixedCoord<-1, -1,  1>()].temp +
-		neighborhood[FixedCoord<-1,  0,  1>()].temp +
-		neighborhood[FixedCoord<-1,  1,  1>()].temp +
-		
-		neighborhood[FixedCoord< 0, -1,  1>()].temp +
-		neighborhood[FixedCoord< 0,  0,  1>()].temp +
-		neighborhood[FixedCoord< 0,  1,  1>()].temp +
-		
-		neighborhood[FixedCoord< 1, -1,  1>()].temp +
-		neighborhood[FixedCoord< 1,  0,  1>()].temp +		
-		neighborhood[FixedCoord< 1,  1,  1>()].temp) * (1.0 / 27.0);
+*/ 				
+		} 
 
    }
 
@@ -172,10 +145,10 @@ public:
         {
 			//seede den random nr generator 
 			// RANDOM_NUMBER max?
-			ret->set(*i, Cell(Random::gen_d()));
+			//ret->set(*i, Cell(Random::gen_d()));
 			
 			// DEBUG_GRID == 1
-			//ret->set(*i, Cell(0.0));
+			ret->set(*i, Cell(1.0));
 		}
 		
 		/// Todo: Set multiple first spikes
@@ -191,7 +164,7 @@ public:
 						  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
 						  << "WARNING---------------------------------------------------\n";
 	
-				ret->set(c, Cell(spikes[0]));
+				//ret->set(c, Cell(spikes[0]));
 		}
 		    
         // update sourceTotal on every node
