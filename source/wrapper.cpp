@@ -22,7 +22,7 @@ public:
         public APITraits::HasFixedCoordsOnlyUpdate,
         public APITraits::HasUpdateLineX,
         //public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >, 
-		public APITraits::HasStencil<Stencils::Moore<3, 1> >, //contains all spatial neighbours
+	public APITraits::HasStencil<Stencils::Moore<3, 1> >, //contains all spatial neighbours
         //public APITraits::HasOpaqueMPIDataType<Cell>,
         public APITraits::HasTorusTopology<3>,	// periodische randbedingung - cube ist konstant
         //public APITraits::HasCubeTopology<3>,
@@ -33,14 +33,14 @@ public:
         temp(v)
     {}
 
-	template<typename NEIGHBORHOOD>
+    template<typename NEIGHBORHOOD>
     static void updateLineX(Cell *target, long *x, long endX, const NEIGHBORHOOD& hood, int /* nanoStep */)
     {
 
 //	vectorized SoA
 //	int num_vars = 1;
 //	for(int i = 0; i < num_vars; ++i){
-		for (; *x < endX; ++x) 
+		for (; *x < endX; ++*x) 
 		{	
 // 			*** 2D5PT ***
             target[*x].temp = (hood[FixedCoord<-1,  0,  0>()].temp +
@@ -138,17 +138,15 @@ public:
     virtual void grid(GridBase<Cell, 3> *ret)
     {
 		
-        CoordBox<3> rect = ret->boundingBox();
-        std::cout << rect.dimensions << std::endl;
-        
+        CoordBox<3> rect = ret->boundingBox();        
         for (CoordBox<3>::Iterator i = rect.begin(); i != rect.end(); ++i)
         {
 			//seede den random nr generator 
 			// RANDOM_NUMBER max?
-			//ret->set(*i, Cell(Random::gen_d()));
+			ret->set(*i, Cell(Random::gen_d()));
 			
 			// DEBUG_GRID == 1
-			ret->set(*i, Cell(1.0));
+			//ret->set(*i, Cell(1.0));
 		}
 		
 		/// Todo: Set multiple first spikes
@@ -164,7 +162,7 @@ public:
 						  << "WARNING: and we 're setting the initial spike " << std::setprecision (15) << spikes[0] << " into the grid\n"
 						  << "WARNING---------------------------------------------------\n";
 	
-				//ret->set(c, Cell(spikes[0]));
+				ret->set(c, Cell(spikes[0]));
 		}
 		    
         // update sourceTotal on every node
